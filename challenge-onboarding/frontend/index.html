@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Innovation Challenge Onboarding Assistant</title>
+<style>
+  /* [Existing CSS unchanged; included for completeness] */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f7fa;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    color: #333;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 900px;
+    height: 100vh;
+    max-height: 900px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+    border-radius: 12px;
+    background: white;
+    margin: 20px;
+  }
+  header {
+    background: #3a86ff;
+    color: white;
+    padding: 15px 25px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    user-select: none;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 15px 20px;
+    overflow-y: auto;
+  }
+  #chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    background: #f9fbfd;
+    overflow-y: auto;
+    margin-bottom: 15px;
+  }
+  .message {
+    padding: 10px 18px;
+    margin: 8px 0;
+    max-width: 70%;
+    border-radius: 22px;
+    line-height: 1.4;
+    font-size: 1rem;
+    word-wrap: break-word;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+    position: relative;
+  }
+  .message.assistant {
+    background: #3a86ff;
+    color: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .message.user {
+    background: #e0e0e0;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .message.ai {
+    background: #e3f2fd;
+    color: #1a237e;
+    border: 1px solid #90caf9;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .ai-loading {
+    position: relative;
+    opacity: 0.7;
+  }
+  .ai-loading::after {
+    content: "⚙️";
+    position: absolute;
+    right: 10px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .ai-message-actions {
+    margin-top: 5px;
+    display: flex;
+    gap: 10px;
+  }
+  .ai-message-actions button {
+    background: none;
+    border: none;
+    color: #3a86ff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  #input-area {
+    display: flex;
+    margin-top: 10px;
+  }
+  #user-input {
+    flex: 1;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 30px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  #user-input:focus {
+    border-color: #3a86ff;
+  }
+  #send-button {
+    background: #3a86ff;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    border-radius: 30px;
+    width: 50px;
+    height: 50px;
+    margin-left: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #send-button:disabled {
+    background: #8ab6ff;
+    cursor: not-allowed;
+  }
+  #send-button:hover:not(:disabled) {
+    background: #265ecf;
+  }
+  #wizard-container {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-top: 15px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 3px 8px rgb(0 0 0 / 0.08);
+  }
+  #wizard-title {
+    font-weight: 700;
+    font-size: 1.35rem;
+    margin-bottom: 15px;
+    color: #3a86ff;
+  }
+  label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    display: block;
+    color: #444;
+  }
+  input[type="text"], textarea, select, input[type="number"], input[type="checkbox"] {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    border-radius: 7px;
+    border: 1.5px solid #ccc;
+    resize: vertical;
+    transition: border-color 0.3s;
+  }
+  input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+  }
+  textarea {
+    min-height: 100px;
+  }
+  input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed #ccc;
+    border-radius: 7px;
+    margin-bottom: 15px;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus, input[type="number"]:focus {
+    border-color: #3a86ff;
+    outline: none;
+  }
+  .help-text {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 8px 0 15px 0;
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+  }
+  button.primary {
+    background: #3a86ff;
+    border: none;
+    color: white;
+    padding: 13px 25px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 120px;
+  }
+  button.primary:disabled {
+    background: #8ab6ff;
+    cursor: not-allowed;
+  }
+  button.primary:hover:not(:disabled) {
+    background: #265ecf;
+  }
+  button.secondary {
+    background: transparent;
+    border: 2px solid #3a86ff;
+    color: #3a86ff;
+    padding: 13px 25px;
+    font-size: 1.05rem;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    min-width: 120px;
+  }
+  button.secondary:hover {
+    background: #3a86ff;
+    color: white;
+  }
+  .file-preview {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background: #f9f9f9;
+  }
+  .file-preview-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  .file-preview-item button {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+  }
+  .reviewer-list {
+    margin-top: 15px;
+  }
+  .reviewer-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .reviewer-item select {
+    margin-left: 10px;
+    flex: 1;
+  }
+  .reviewer-item button {
+    margin-left: 10px;
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+  }
+  .add-reviewer {
+    margin-top: 10px;
+  }
+  .notification-settings {
+    margin-top: 15px;
+  }
+  .notification-item {
+    margin-bottom: 12px;
+  }
+  #help-popup {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 450px;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 18px 28px;
+    z-index: 1100;
+    display: none;
+  }
+  #help-popup h4 {
+    margin-top: 0;
+    color: #3a86ff;
+    font-size: 1.3rem;
+  }
+  #help-popup p {
+    font-size: 1rem;
+    color: #444;
+  }
+  #help-popup button.close {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 1.7rem;
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    cursor: pointer;
+  }
+  #support-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1150;
+  }
+  #support-modal .modal-content {
+    background: white;
+    border-radius: 14px;
+    padding: 28px 35px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+  }
+  #support-modal h3 {
+    margin-top: 0;
+    color: #3a86ff;
+    font-size: 1.5rem;
+  }
+  #support-modal label {
+    font-weight: 600;
+    margin-top: 15px;
+    font-size: 1rem;
+  }
+  #support-modal textarea {
+    resize: vertical;
+    font-size: 1.05rem;
+  }
+  #support-modal .modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  #support-modal button {
+    margin-left: 14px;
+    padding: 12px 28px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    cursor: pointer;
+  }
+  #edit-ai-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1150;
+  }
+  #edit-ai-modal .modal-content {
+    background: white;
+    border-radius: 14px;
+    padding: 28px 35px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+  }
+  #edit-ai-modal h3 {
+    margin-top: 0;
+    color: #3a86ff;
+    font-size: 1.5rem;
+  }
+  #edit-ai-modal textarea {
+    resize: vertical;
+    font-size: 1.05rem;
+  }
+  #edit-ai-modal .modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  #edit-ai-modal button {
+    margin-left: 14px;
+    padding: 12px 28px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    cursor: pointer;
+  }
+  #progress-bar-container {
+    width: 100%;
+    background-color: #eee;
+    border-radius: 30px;
+    overflow: hidden;
+    height: 16px;
+    margin-bottom: 15px;
+  }
+  #progress-bar {
+    height: 16px;
+    background-color: #3a86ff;
+    width: 0;
+    transition: width 0.3s ease;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #a0b9ff;
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  @media (max-width: 767px) {
+    #app {
+      max-width: 100vw;
+      height: 100vh;
+      max-height: none;
+      border-radius: 0;
+      margin: 0;
+      box-shadow: none;
+    }
+    header {
+      font-size: 1.3rem;
+      padding: 12px 15px;
+      border-radius: 0;
+    }
+    main {
+      padding: 12px 15px;
+    }
+    #chat-container {
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .message {
+      font-size: 0.95rem;
+    }
+    #user-input {
+      font-size: 1rem;
+      padding: 12px 15px;
+    }
+    #send-button {
+      width: 44px;
+      height: 44px;
+      font-size: 1.2rem;
+      margin-left: 8px;
+    }
+    #wizard-container {
+      padding: 20px 22px;
+      border-radius: 8px;
+    }
+    #wizard-title {
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+    }
+    input[type="text"], textarea, select, input[type="number"] {
+      font-size: 1rem;
+      padding: 10px 12px;
+    }
+    button.primary, button.secondary {
+      font-size: 1rem;
+      padding: 10px 18px;
+      min-width: 100px;
+    }
+  }
+  @media (max-width: 480px) {
+    #app {
+      margin: 0;
+      border-radius: 0;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="app" role="main" aria-label="Innovation Challenge Onboarding Assistant">
+    <header>
+      Innovation Challenge Onboarding Assistant
+    </header>
+    <main>
+      <div id="progress-bar-container" aria-hidden="true">
+        <div id="progress-bar"></div>
+      </div>
+      <div id="chat-container" aria-live="polite" aria-atomic="true" aria-relevant="additions" tabindex="0" role="log">
+        <!-- Chat messages will appear here -->
+      </div>
+      <form id="input-area" aria-label="User input area" autocomplete="off">
+        <input 
+          type="text" 
+          id="user-input" 
+          placeholder="Type your message or answer here..." 
+          aria-autocomplete="list"
+          aria-describedby="input-help" />
+        <button id="send-button" type="submit" aria-label="Send message" disabled>▶</button>
+      </form>
+      <small id="input-help" class="help-text" aria-live="polite"></small>
+      <section id="wizard-container" aria-label="Wizard onboarding steps" tabindex="-1">
+        <!-- Wizard form contents injected dynamically -->
+      </section>
+      <button id="support-button" class="secondary" type="button" style="margin-top:15px; width:100%;">Request Platform Support</button>
+    </main>
+  </div>
+  <div id="help-popup" role="dialog" aria-modal="true" aria-labelledby="help-popup-title">
+    <button class="close" aria-label="Close help popup" title="Close help popup">×</button>
+    <h4 id="help-popup-title">Help</h4>
+    <div id="help-content"></div>
+  </div>
+  <div id="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title" aria-describedby="support-modal-desc">
+    <div class="modal-content">
+      <h3 id="support-modal-title">Request Support</h3>
+      <p id="support-modal-desc">Please describe your issue or question, and our team will get back to you shortly.</p>
+      <label for="support-message">Message:</label>
+      <textarea id="support-message" rows="4" placeholder="Enter your message here" aria-required="true"></textarea>
+      <div class="notification-item">
+        <input type="checkbox" id="data-consent" />
+        <label for="data-consent">I consent to storing my message for support purposes</label>
+      </div>
+      <div class="modal-buttons">
+        <button id="support-cancel" class="secondary" type="button">Cancel</button>
+        <button id="support-submit" class="primary" type="button" disabled>Submit</button>
+      </div>
+    </div>
+  </div>
+  <div id="edit-ai-modal" role="dialog" aria-modal="true" aria-labelledby="edit-ai-modal-title">
+    <div class="modal-content">
+      <h3 id="edit-ai-modal-title">Edit AI Output</h3>
+      <textarea id="edit-ai-text" rows="6" aria-required="true"></textarea>
+      <div class="modal-buttons">
+        <button id="edit-ai-cancel" class="secondary" type="button">Cancel</button>
+        <button id="edit-ai-save" class="primary" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+<script>
+    (() => {
+      // API Configuration
+      const HUGGINGFACE_API_KEY = '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'; // Replaced with environment variable in production
+      const onboardingSteps = [
+        {
+          id: 'welcome',
+          type: 'chat',
+          message: "Welcome to the Innovation Challenge Onboarding! I'm here to guide you step-by-step. To begin, briefly describe the core problem or idea you want to launch a challenge for.",
+          userInputLabel: "Enter your idea or problem statement",
+          validate: input => input.trim().length >= 10,
+          validationMessage: "Please enter at least 10 characters for your idea/problem statement.",
+          help: "Your challenge idea should be clear and concise. For example: 'Looking for innovative ways to reduce plastic waste in urban areas.'",
+          nextStep: 'defineGoals'
+        },
+        {
+          id: 'defineGoals',
+          type: 'wizard',
+          title: "Define Your Challenge Goals",
+          description: "Specify the goals for your innovation challenge. You can choose multiple as applicable.",
+          inputLabel: "Challenge Goals (Select all that apply)",
+          inputType: "checkbox-group",
+          options: [
+            {value: "business", text: "Business Impact"},
+            {value: "technical", text: "Technical Innovation"},
+            {value: "social", text: "Social/Environmental Change"},
+            {value: "marketing", text: "Marketing & Brand Awareness"},
+            {value: "community", text: "Community Engagement"}
+          ],
+          validate: input => Array.isArray(input) && input.length > 0,
+          validationMessage: "Please select at least one goal for your challenge.",
+          help: "Select one or more goals that best reflect what you want to achieve.",
+          nextStep: 'chooseChallengeType'
+        },
+        {
+          id: 'chooseChallengeType',
+          type: 'wizard',
+          title: "Choose Your Challenge Type",
+          description: "Select the type of innovation challenge you want to run.",
+          inputLabel: "Challenge Type",
+          inputType: "select",
+          options: [
+            {value: "", text: "Select one"},
+            {value: "idea_competition", text: "Idea Competition"},
+            {value: "hackathon", text: "Hackathon"},
+            {value: "data_science", text: "Data Science / Kaggle Style"},
+            {value: "product_development", text: "Product Development"},
+            {value: "open_innovation", text: "Open Innovation Challenge"},
+            {value: "ai_challenge", text: "AI Challenge"}
+          ],
+          validate: input => input.trim() !== "",
+          validationMessage: "Please select a challenge type.",
+          help: "Challenge types influence format, timelines, and judging criteria.",
+          nextStep: 'setAudience'
+        },
+        {
+          id: 'setAudience',
+          type: 'wizard',
+          title: "Set Your Audience & Registration",
+          description: "Configure your target participants and registration settings.",
+          inputLabel: "Audience & Settings",
+          inputType: "audience-settings",
+          validate: input => input && input.participantType && input.participantType !== "",
+          validationMessage: "Please select a participant type.",
+          help: "Choose participant type, geographic/language filters, team rules, and Q&A forum options.",
+          nextStep: 'submissionRequirements'
+        },
+        {
+          id: 'submissionRequirements',
+          type: 'wizard',
+          title: "Specify Submission Requirements",
+          description: "Define what participants need to submit for your challenge.",
+          inputLabel: "Submission Requirements",
+          inputType: "submission-requirements",
+          validate: input => input && input.format && input.documentation,
+          validationMessage: "Please specify required submission formats and documentation.",
+          help: "Examples include ZIP files, GitHub repos, README documents, demo videos, etc.",
+          nextStep: 'configurePrizes'
+        },
+        {
+          id: 'configurePrizes',
+          type: 'wizard',
+          title: "Configure Prizes",
+          description: "Select a prize model and allocate prize budgets.",
+          inputLabel: "Prize Configuration",
+          inputType: "prize-configuration",
+          validate: input => input && input.model && (input.totalBudget > 0),
+          validationMessage: "Please select a prize model and specify a positive budget.",
+          help: "Choose between single winner, tiered, or milestone-based prizes.",
+          nextStep: 'setTimeline'
+        },
+        {
+          id: 'setTimeline',
+          type: 'wizard',
+          title: "Set Your Timeline & Milestones",
+          description: "Define your challenge duration and key milestones.",
+          inputLabel: "Timeline & Milestones",
+          inputType: "timeline-setup",
+          validate: input => input && input.startDate && input.endDate && (new Date(input.endDate) > new Date(input.startDate)),
+          validationMessage: "Please provide valid start and end dates with end date after start date.",
+          help: "Add key milestones like registration close, prototype review, final submission.",
+          nextStep: 'setEvaluationCriteria'
+        },
+        {
+          id: 'setEvaluationCriteria',
+          type: 'wizard',
+          title: "Establish Review & Evaluation Criteria",
+          description: "Configure how your submissions will be reviewed and scored.",
+          inputLabel: "Evaluation Criteria",
+          inputType: "evaluation-criteria",
+          validate: input => input && input.evaluationModel && input.reviewers && input.reviewers.length > 0,
+          validationMessage: "Please select an evaluation model and add at least one reviewer.",
+          help: "Choose rolling or post-submission review and assign reviewers.",
+          nextStep: 'monitoringSetup'
+        },
+        {
+          id: 'monitoringSetup',
+          type: 'wizard',
+          title: "Set Up Monitoring & Communication",
+          description: "Configure how you will monitor challenge progress and communicate updates.",
+          inputLabel: "Monitoring Setup",
+          inputType: "monitoring-setup",
+          validate: input => input && typeof input.notificationsEnabled === 'boolean',
+          validationMessage: "Please configure your notifications and announcement settings.",
+          help: "Enable email and platform notifications, set announcement frequencies.",
+          nextStep: 'reviewInputs'
+        },
+        {
+          id: 'reviewInputs',
+          type: 'wizard',
+          title: "Review & Confirm your Challenge Setup",
+          description: "Please review your inputs below. You can go back to edit if needed, or confirm to launch the onboarding.",
+          review: true,
+          nextStep: 'aiAssist'
+        },
+        {
+          id: 'aiAssist',
+          type: 'chat',
+          message: "I can help with: /summarize, /question, /generate-rubric, /recommend-prizes, /validate-submissions, or ask any question!",
+          userInputLabel: "Type your question or AI command...",
+          validate: input => input.trim().length >= 3,
+          nextStep: 'completion'
+        },
+        {
+          id: 'completion',
+          type: 'chat',
+          message: "Congrats! You've completed the onboarding setup. You can launch your challenge now or modify any details.",
+          userInputLabel: "Type 'launch' to finish or 'edit' to revise any step.",
+          validate: input => ['launch', 'edit'].includes(input.trim().toLowerCase()),
+          validationMessage: "Please type 'launch' or 'edit'.",
+          help: "Type 'launch' to finalize your challenge launch or 'edit' to go back.",
+          nextStep: (input, context) => input.trim().toLowerCase() === 'edit' ? 'defineGoals' : 'done'
+        },
+        {
+          id: 'done',
+          type: 'chat',
+          message: "Your challenge launch journey is underway! If you need additional help, use the 'Request Platform Support' button anytime.",
+          userInputLabel: null,
+          nextStep: null
+        }
+      ];
+      let state = {
+        currentStep: "welcome",
+        inputs: {
+          welcome: "",
+          defineGoals: [],
+          chooseChallengeType: "",
+          setAudience: {
+            participantType: "",
+            geoFilter: "",
+            langFilter: "",
+            teamParticipation: false,
+            enableForums: false
+          },
+          submissionRequirements: {
+            format: "",
+            documentation: "",
+            templates: []
+          },
+          configurePrizes: {
+            model: "",
+            totalBudget: 0,
+            prizeStructure: ""
+          },
+          setTimeline: {
+            startDate: "",
+            endDate: "",
+            milestones: []
+          },
+          setEvaluationCriteria: {
+            evaluationModel: "",
+            rubrics: [],
+            reviewers: [],
+            peerReview: false,
+            aiReview: false
+          },
+          monitoringSetup: {
+            notificationsEnabled: true,
+            emailAlerts: true,
+            inAppAlerts: true,
+            announcementFrequency: "weekly"
+          }
+        },
+        supportRequests: [] // Store support requests locally
+      };
+      const chatContainer = document.getElementById('chat-container');
+      const userInput = document.getElementById('user-input');
+      const sendButton = document.getElementById('send-button');
+      const wizardContainer = document.getElementById('wizard-container');
+      const inputHelp = document.getElementById('input-help');
+      const progressBar = document.getElementById('progress-bar');
+      const supportButton = document.getElementById('support-button');
+      const helpPopup = document.getElementById('help-popup');
+      const helpContent = document.getElementById('help-content');
+      const helpCloseButton = document.querySelector('#help-popup .close');
+      const supportModal = document.getElementById('support-modal');
+      const supportMessage = document.getElementById('support-message');
+      const supportSubmit = document.getElementById('support-submit');
+      const supportCancel = document.getElementById('support-cancel');
+      const dataConsent = document.getElementById('data-consent');
+      const editAiModal = document.getElementById('edit-ai-modal');
+      const editAiText = document.getElementById('edit-ai-text');
+      const editAiSave = document.getElementById('edit-ai-save');
+      const editAiCancel = document.getElementById('edit-ai-cancel');
+      const aiContext = {
+        generateRecommendation: async (userPrompt, command) => {
+          try {
+            const headers = {
+              'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
+              'Content-Type': 'application/json'
+            };
+            let url, payload;
+            if (command === 'summarize') {
+              url = 'https://api-inference.huggingface.co/models/facebook/bart-large-cnn';
+              payload = { inputs: state.inputs.welcome, parameters: { max_length: 50 } };
+            } else if (command === 'question') {
+              url = 'https://api-inference.huggingface.co/models/deepset/roberta-base-squad2';
+              const context = `Challenge type: ${state.inputs.chooseChallengeType || 'unknown'}. Budget: $${state.inputs.configurePrizes.totalBudget || 0}.`;
+              payload = { inputs: { question: userPrompt, context } };
+            } else if (command === 'generate-rubric') {
+              url = 'https://api-inference.huggingface.co/models/distilgpt2';
+              payload = {
+                inputs: `Generate an evaluation rubric for a ${state.inputs.chooseChallengeType || 'unknown'} challenge, ensuring fairness and inclusivity.`,
+                parameters: { max_length: 200 }
+              };
+            } else if (command === 'recommend-prizes') {
+              url = 'https://api-inference.huggingface.co/models/distilgpt2';
+              payload = {
+                inputs: `Recommend a prize structure for a ${state.inputs.chooseChallengeType || 'unknown'} challenge with budget $${state.inputs.configurePrizes.totalBudget || 0}, ensuring equitable distribution.`,
+                parameters: { max_length: 150 }
+              };
+            } else if (command === 'validate-submissions') {
+              url = 'https://api-inference.huggingface.co/models/distilgpt2';
+              payload = {
+                inputs: `Suggest submission validation rules for a ${state.inputs.chooseChallengeType || 'unknown'} challenge.`,
+                parameters: { max_length: 150 }
+              };
+            } else {
+              url = 'https://api-inference.huggingface.co/models/distilgpt2';
+              payload = {
+                inputs: userPrompt,
+                parameters: { max_length: 150 }
+              };
+            }
+            const response = await fetch(url, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            let result;
+            if (command === 'summarize') {
+              result = data[0].summary_text || 'Error generating summary.';
+            } else if (command === 'question') {
+              result = data.answer || 'Error answering question.';
+            } else {
+              result = data[0].generated_text || 'Error generating response.';
+            }
+            return `AI-Generated Output: ${result}\nNote: Review for fairness and accuracy.`;
+          } catch (error) {
+            console.error('HuggingFace Error:', error);
+            return "Sorry, I'm having trouble helping right now. Please try again later.";
+          }
+        }
+      };
+      const aiCommands = {
+        summarize: async () => await aiContext.generateRecommendation('', 'summarize'),
+        question: async (question) => await aiContext.generateRecommendation(question, 'question'),
+        generateRubric: async () => await aiContext.generateRecommendation('', 'generate-rubric'),
+        recommendPrizes: async () => await aiContext.generateRecommendation('', 'recommend-prizes'),
+        validateSubmissions: async () => await aiContext.generateRecommendation('', 'validate-submissions'),
+        generalHelp: async (question) => await aiContext.generateRecommendation(question, 'general')
+      };
+      function init() {
+        renderCurrentStep();
+        updateProgressBar();
+      }
+      function renderCurrentStep() {
+        const step = onboardingSteps.find(s => s.id === state.currentStep);
+        if (!step) return;
+        wizardContainer.style.display = step.type === 'wizard' ? 'flex' : 'none';
+        chatContainer.innerHTML = '';
+        if (step.type === 'chat') {
+          addAssistantMessage(step.message);
+          userInput.placeholder = step.userInputLabel || "Type your message...";
+          inputHelp.textContent = step.help || "";
+        } else {
+          renderWizardStep(step);
+        }
+        userInput.focus();
+      }
+      function renderWizardStep(step) {
+        wizardContainer.innerHTML = '';
+        const title = document.createElement('div');
+        title.id = 'wizard-title';
+        title.textContent = step.title;
+        wizardContainer.appendChild(title);
+        if (step.review) {
+          renderReviewStep();
+        } else {
+          const renderFunc = {
+            'checkbox-group': renderCheckboxGroup,
+            'select': renderDefaultInput,
+            'audience-settings': renderAudienceSettings,
+            'submission-requirements': renderSubmissionRequirements,
+            'prize-configuration': renderPrizeConfiguration,
+            'timeline-setup': renderTimelineSetup,
+            'evaluation-criteria': renderEvaluationCriteria,
+            'monitoring-setup': renderMonitoringSetup
+          }[step.inputType];
+          renderFunc(step);
+        }
+      }
+      function renderReviewStep() {
+        const container = document.createElement('div');
+        Object.keys(state.inputs).forEach(stepId => {
+          const step = onboardingSteps.find(s => s.id === stepId);
+          if (!step) return;
+          const div = document.createElement('div');
+          div.style.marginBottom = '15px';
+          div.innerHTML = `<strong>${step.title || stepId}:</strong> ${JSON.stringify(state.inputs[stepId], null, 2).replace(/\n/g, '<br>')}`;
+          container.appendChild(div);
+        });
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Summarize Inputs';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const summary = await aiCommands.summarize();
+          addAIMessage(summary);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(aiButton);
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'buttons';
+        const btnBack = document.createElement('button');
+        btnBack.className = 'secondary';
+        btnBack.textContent = 'Back';
+        btnBack.onclick = () => goToStep(getPreviousStepId(state.currentStep));
+        buttonsDiv.appendChild(btnBack);
+        const btnNext = document.createElement('button');
+        btnNext.className = 'primary';
+        btnNext.textContent = 'Confirm';
+        btnNext.onclick = () => goToStep('aiAssist');
+        buttonsDiv.appendChild(btnNext);
+        wizardContainer.appendChild(container);
+        wizardContainer.appendChild(buttonsDiv);
+      }
+      function renderCheckboxGroup(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        step.options.forEach(option => {
+          const div = document.createElement('div');
+          div.className = 'notification-item';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = option.value;
+          checkbox.value = option.value;
+          checkbox.checked = state.inputs[step.id].includes(option.value);
+          const label = document.createElement('label');
+          label.setAttribute('for', option.value);
+          label.textContent = option.text;
+          div.appendChild(checkbox);
+          div.appendChild(label);
+          container.appendChild(div);
+        });
+        renderWizardButtons(() => {
+          const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+          return checked;
+        }, step);
+        wizardContainer.appendChild(container);
+      }
+      function renderDefaultInput(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const label = document.createElement('label');
+        label.textContent = step.inputLabel;
+        container.appendChild(label);
+        const select = document.createElement('select');
+        step.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.text;
+          select.appendChild(option);
+        });
+        select.value = state.inputs[step.id] || '';
+        container.appendChild(select);
+        renderWizardButtons(() => select.value, step);
+        wizardContainer.appendChild(container);
+      }
+      function renderAudienceSettings(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Get AI Recommendation';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const recommendation = await aiCommands.generalHelp(`Recommend audience settings for ${state.inputs.chooseChallengeType} challenge`);
+          addAIMessage(recommendation);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(aiButton);
+        const pTypeLabel = document.createElement('label');
+        pTypeLabel.textContent = "Participant Type";
+        container.appendChild(pTypeLabel);
+        const participantSelect = document.createElement('select');
+        participantSelect.id = 'participantType';
+        ['Select one', 'Open/Public', 'Invite Only'].forEach((optText, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx === 0 ? '' : (idx === 1 ? 'open' : 'invite');
+          opt.textContent = optText;
+          participantSelect.appendChild(opt);
+        });
+        participantSelect.value = state.inputs[step.id].participantType || '';
+        container.appendChild(participantSelect);
+        const geoLabel = document.createElement('label');
+        geoLabel.textContent = "Geographic Filter (comma separated country codes)";
+        geoLabel.style.marginTop = '12px';
+        container.appendChild(geoLabel);
+        const geoInput = document.createElement('input');
+        geoInput.type = 'text';
+        geoInput.id = 'geoFilter';
+        geoInput.placeholder = 'E.g., US, CA, GB';
+        geoInput.value = state.inputs[step.id].geoFilter || '';
+        container.appendChild(geoInput);
+        const langLabel = document.createElement('label');
+        langLabel.textContent = "Language Filter (comma separated language codes)";
+        langLabel.style.marginTop = '12px';
+        container.appendChild(langLabel);
+        const langInput = document.createElement('input');
+        langInput.type = 'text';
+        langInput.id = 'langFilter';
+        langInput.placeholder = 'E.g., en, fr, es';
+        langInput.value = state.inputs[step.id].langFilter || '';
+        container.appendChild(langInput);
+        const teamDiv = document.createElement('div');
+        teamDiv.style.marginTop = '12px';
+        const teamCheckbox = document.createElement('input');
+        teamCheckbox.type = 'checkbox';
+        teamCheckbox.id = 'teamParticipation';
+        teamCheckbox.checked = state.inputs[step.id].teamParticipation || false;
+        const teamLabel = document.createElement('label');
+        teamLabel.setAttribute('for', 'teamParticipation');
+        teamLabel.textContent = "Enable Team Participation";
+        teamLabel.style.marginLeft = '6px';
+        teamDiv.appendChild(teamCheckbox);
+        teamDiv.appendChild(teamLabel);
+        container.appendChild(teamDiv);
+        const forumDiv = document.createElement('div');
+        forumDiv.style.marginTop = '12px';
+        const forumCheckbox = document.createElement('input');
+        forumCheckbox.type = 'checkbox';
+        forumCheckbox.id = 'enableForums';
+        forumCheckbox.checked = state.inputs[step.id].enableForums || false;
+        const forumLabel = document.createElement('label');
+        forumLabel.setAttribute('for', 'enableForums');
+        forumLabel.textContent = "Enable Forums and Q&A Boards";
+        forumLabel.style.marginLeft = '6px';
+        forumDiv.appendChild(forumCheckbox);
+        forumDiv.appendChild(forumLabel);
+        container.appendChild(forumDiv);
+        renderWizardButtons(() => ({
+          participantType: participantSelect.value,
+          geoFilter: geoInput.value.trim(),
+          langFilter: langInput.value.trim(),
+          teamParticipation: teamCheckbox.checked,
+          enableForums: forumCheckbox.checked
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderSubmissionRequirements(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Get AI Recommendation';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const recommendation = await aiCommands.validateSubmissions();
+          addAIMessage(recommendation);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(aiButton);
+        const formatLabel = document.createElement('label');
+        formatLabel.textContent = "Submission Format";
+        container.appendChild(formatLabel);
+        const formatInput = document.createElement('input');
+        formatInput.type = 'text';
+        formatInput.placeholder = 'E.g., ZIP, PDF, GitHub URL';
+        formatInput.value = state.inputs[step.id].format || '';
+        container.appendChild(formatInput);
+        const docLabel = document.createElement('label');
+        docLabel.textContent = "Required Documentation";
+        docLabel.style.marginTop = '12px';
+        container.appendChild(docLabel);
+        const docInput = document.createElement('textarea');
+        docInput.placeholder = 'E.g., README, demo video';
+        docInput.value = state.inputs[step.id].documentation || '';
+        container.appendChild(docInput);
+        renderWizardButtons(() => ({
+          format: formatInput.value.trim(),
+          documentation: docInput.value.trim(),
+          templates: state.inputs[step.id].templates
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderPrizeConfiguration(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Get AI Recommendation';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const recommendation = await aiCommands.recommendPrizes();
+          addAIMessage(recommendation);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(aiButton);
+        const modelLabel = document.createElement('label');
+        modelLabel.textContent = "Prize Model";
+        container.appendChild(modelLabel);
+        const modelSelect = document.createElement('select');
+        ['Select one', 'Single Winner', 'Tiered', 'Milestone-Based'].forEach((opt, idx) => {
+          const option = document.createElement('option');
+          option.value = idx === 0 ? '' : opt.toLowerCase().replace(' ', '-');
+          option.textContent = opt;
+          modelSelect.appendChild(option);
+        });
+        modelSelect.value = state.inputs[step.id].model || '';
+        container.appendChild(modelSelect);
+        const budgetLabel = document.createElement('label');
+        budgetLabel.textContent = "Total Budget ($)";
+        budgetLabel.style.marginTop = '12px';
+        container.appendChild(budgetLabel);
+        const budgetInput = document.createElement('input');
+        budgetInput.type = 'number';
+        budgetInput.min = '0';
+        budgetInput.value = state.inputs[step.id].totalBudget || '0';
+        container.appendChild(budgetInput);
+        renderWizardButtons(() => ({
+          model: modelSelect.value,
+          totalBudget: parseFloat(budgetInput.value) || 0,
+          prizeStructure: state.inputs[step.id].prizeStructure
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderTimelineSetup(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Get AI Recommendation';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const recommendation = await aiCommands.generalHelp(`Suggest timeline for ${state.inputs.chooseChallengeType} challenge`);
+          addAIMessage(recommendation);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(container);
+        const startLabel = document.createElement('label');
+        startLabel.textContent = "Start Date";
+        container.appendChild(startLabel);
+        const startInput = document.createElement('input');
+        startInput.type = 'date';
+        startInput.value = state.inputs[step.id].startDate || '';
+        container.appendChild(startInput);
+        const endLabel = document.createElement('label');
+        endLabel.textContent = "End Date";
+        endLabel.style.marginTop = '12px';
+        container.appendChild(endLabel);
+        const endInput = document.createElement('input');
+        endInput.type = 'date';
+        endInput.value = state.inputs[step.id].endDate || '';
+        container.appendChild(endInput);
+        renderWizardButtons(() => ({
+          startDate: startInput.value,
+          endDate: endInput.value,
+          milestones: state.inputs[step.id].milestones
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderEvaluationCriteria(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const aiButton = document.createElement('button');
+        aiButton.className = 'secondary';
+        aiButton.style.marginBottom = '15px';
+        aiButton.textContent = 'Generate Rubric';
+        aiButton.onclick = async () => {
+          aiButton.disabled = true;
+          aiButton.classList.add('ai-loading');
+          const rubric = await aiCommands.generateRubric();
+          addAIMessage(rubric);
+          aiButton.disabled = false;
+          aiButton.classList.remove('ai-loading');
+        };
+        container.appendChild(aiButton);
+        const modelLabel = document.createElement('label');
+        modelLabel.textContent = "Evaluation Model";
+        container.appendChild(modelLabel);
+        const modelSelect = document.createElement('select');
+        ['Select one', 'Rolling Review', 'Post-Submission Review'].forEach((opt, idx) => {
+          const option = document.createElement('option');
+          option.value = idx === 0 ? '' : opt.toLowerCase().replace(' ', '-');
+          option.textContent = opt;
+          modelSelect.appendChild(option);
+        });
+        modelSelect.value = state.inputs[step.id].evaluationModel || '';
+        container.appendChild(modelSelect);
+        const reviewersLabel = document.createElement('label');
+        reviewersLabel.textContent = "Reviewers (comma-separated anonymized IDs)";
+        reviewersLabel.style.marginTop = '12px';
+        container.appendChild(reviewersLabel);
+        const reviewersInput = document.createElement('input');
+        reviewersInput.type = 'text';
+        reviewersInput.placeholder = 'E.g., reviewer1, reviewer2';
+        reviewersInput.value = state.inputs[step.id].reviewers.join(', ') || '';
+        container.appendChild(reviewersInput);
+        renderWizardButtons(() => ({
+          evaluationModel: modelSelect.value,
+          reviewers: reviewersInput.value.split(',').map(r => r.trim()).filter(r => r),
+          rubrics: state.inputs[step.id].rubrics,
+          peerReview: state.inputs[step.id].peerReview,
+          aiReview: state.inputs[step.id].aiReview
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderMonitoringSetup(step) {
+        const container = document.createElement('div');
+        const description = document.createElement('p');
+        description.textContent = step.description;
+        container.appendChild(description);
+        const notificationsDiv = document.createElement('div');
+        notificationsDiv.className = 'notification-item';
+        const notificationsCheckbox = document.createElement('input');
+        notificationsCheckbox.type = 'checkbox';
+        notificationsCheckbox.id = 'notificationsEnabled';
+        notificationsCheckbox.checked = state.inputs[step.id].notificationsEnabled;
+        const notificationsLabel = document.createElement('label');
+        notificationsLabel.setAttribute('for', 'notificationsEnabled');
+        notificationsLabel.textContent = "Enable Notifications";
+        notificationsDiv.appendChild(notificationsCheckbox);
+        notificationsDiv.appendChild(notificationsLabel);
+        container.appendChild(notificationsDiv);
+        const frequencyLabel = document.createElement('label');
+        frequencyLabel.textContent = "Announcement Frequency";
+        frequencyLabel.style.marginTop = '12px';
+        container.appendChild(frequencyLabel);
+        const frequencySelect = document.createElement('select');
+        ['Daily', 'Weekly', 'Biweekly'].forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.toLowerCase();
+          option.textContent = opt;
+          frequencySelect.appendChild(option);
+        });
+        frequencySelect.value = state.inputs[step.id].announcementFrequency || 'weekly';
+        container.appendChild(frequencySelect);
+        renderWizardButtons(() => ({
+          notificationsEnabled: notificationsCheckbox.checked,
+          emailAlerts: state.inputs[step.id].emailAlerts,
+          inAppAlerts: state.inputs[step.id].inAppAlerts,
+          announcementFrequency: frequencySelect.value
+        }), step);
+        wizardContainer.appendChild(container);
+      }
+      function renderWizardButtons(getInputValueFunc, step) {
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'buttons';
+        const btnBack = document.createElement('button');
+        btnBack.className = 'secondary';
+        btnBack.textContent = 'Back';
+        btnBack.onclick = () => goToStep(getPreviousStepId(step.id));
+        buttonsDiv.appendChild(btnBack);
+        const btnNext = document.createElement('button');
+        btnNext.className = 'primary';
+        btnNext.textContent = 'Next';
+        btnNext.onclick = () => {
+          const inputValue = getInputValueFunc();
+          if (validateComplexInput(inputValue, step)) {
+            saveInput(step.id, inputValue);
+            goToStep(step.nextStep);
+          } else {
+            alert(step.validationMessage);
+          }
+        };
+        buttonsDiv.appendChild(btnNext);
+        wizardContainer.appendChild(buttonsDiv);
+      }
+      function getPreviousStepId(currentStepId) {
+        const currentIndex = onboardingSteps.findIndex(s => s.id === currentStepId);
+        return currentIndex > 0 ? onboardingSteps[currentIndex - 1].id : null;
+      }
+      function validateInput(input, step) {
+        return step.validate ? step.validate(input) : true;
+      }
+      function validateComplexInput(input, step) {
+        return step.validate ? step.validate(input) : true;
+      }
+      function saveInput(stepId, inputValue) {
+        state.inputs[stepId] = inputValue;
+      }
+      function addAssistantMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message assistant';
+        msg.textContent = text;
+        chatContainer.appendChild(msg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      function addUserMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message user';
+        msg.textContent = text;
+        chatContainer.appendChild(msg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      function addAIMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message ai';
+        msg.textContent = text;
+        chatContainer.appendChild(msg);
+        const actions = document.createElement('div');
+        actions.className = 'ai-message-actions';
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.onclick = () => {
+          editAiText.value = text.replace(/AI-Generated Output.*?: /, '');
+          editAiModal.style.display = 'flex';
+          editAiText.focus();
+          editAiSave.onclick = () => {
+            msg.textContent = `AI-Generated Output (Edited): ${editAiText.value}`;
+            editAiModal.style.display = 'none';
+          };
+        };
+        actions.appendChild(editButton);
+        msg.appendChild(actions);
+        chatContainer.appendChild(msg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      function clearInput() {
+        userInput.value = '';
+        sendButton.disabled = true;
+      }
+      function goToStep(stepId) {
+        if (!stepId) return;
+        state.currentStep = stepId;
+        renderCurrentStep();
+        updateProgressBar();
+      }
+      function updateProgressBar() {
+        const currentIndex = onboardingSteps.findIndex(s => s.id === state.currentStep);
+        const progress = ((currentIndex + 1) / onboardingSteps.length) * 100;
+        progressBar.style.width = `${progress}%`;
+      }
+      async function handleChatInput(inputValue) {
+        inputValue = inputValue.trim();
+        if (!inputValue) return;
+        const step = onboardingSteps.find(s => s.id === state.currentStep);
+        if (!step) return;
+        addUserMessage(inputValue);
+        if (inputValue.startsWith('/')) {
+          const command = inputValue.slice(1).toLowerCase();
+          let response = "I didn't understand that command. Try /help for options.";
+          if (command === 'summarize') {
+            response = await aiCommands.summarize();
+          } else if (command.startsWith('question')) {
+            response = await aiCommands.question(inputValue.slice(9).trim());
+          } else if (command === 'generate-rubric') {
+            response = await aiCommands.generateRubric();
+          } else if (command === 'recommend-prizes') {
+            response = await aiCommands.recommendPrizes();
+          } else if (command === 'validate-submissions') {
+            response = await aiCommands.validateSubmissions();
+          } else if (command === 'help') {
+            response = "Available commands:\n/summarize\n/question [your question]\n/generate-rubric\n/recommend-prizes\n/validate-submissions";
+          }
+          addAIMessage(response);
+          clearInput();
+          return;
+        }
+        if (!validateInput(inputValue, step)) {
+          addAssistantMessage(step.validationMessage || "Invalid input, please try again.");
+          return;
+        }
+        saveInput(step.id, inputValue);
+        const nextStepId = typeof step.nextStep === 'function' 
+          ? step.nextStep(inputValue, state) 
+          : step.nextStep;
+        if (nextStepId) {
+          setTimeout(() => goToStep(nextStepId), 700);
+        }
+        clearInput();
+      }
+      userInput.addEventListener('input', () => {
+        sendButton.disabled = !userInput.value.trim();
+      });
+      document.getElementById('input-area').addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleChatInput(userInput.value);
+      });
+      supportButton.addEventListener('click', () => {
+        supportModal.style.display = 'flex';
+        supportMessage.focus();
+      });
+      supportCancel.addEventListener('click', () => {
+        supportModal.style.display = 'none';
+        supportMessage.value = '';
+        dataConsent.checked = false;
+        supportSubmit.disabled = true;
+      });
+      supportMessage.addEventListener('input', () => {
+        supportSubmit.disabled = !supportMessage.value.trim() || !dataConsent.checked;
+      });
+      dataConsent.addEventListener('change', () => {
+        supportSubmit.disabled = !supportMessage.value.trim() || !dataConsent.checked;
+      });
+      supportSubmit.addEventListener('click', () => {
+        if (supportMessage.value.trim() && dataConsent.checked) {
+          state.supportRequests.push({
+            message: supportMessage.value,
+            consent: dataConsent.checked,
+            timestamp: new Date().toISOString()
+          });
+          alert('Support request submitted: ' + supportMessage.value);
+          supportModal.style.display = 'none';
+          supportMessage.value = '';
+          dataConsent.checked = false;
+          supportSubmit.disabled = true;
+        } else {
+          alert('Please provide a message and consent to storing it.');
+        }
+      });
+      helpCloseButton.addEventListener('click', () => {
+        helpPopup.style.display = 'none';
+      });
+      editAiCancel.addEventListener('click', () => {
+        editAiModal.style.display = 'none';
+        editAiText.value = '';
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          helpPopup.style.display = 'none';
+          supportModal.style.display = 'none';
+          editAiModal.style.display = 'none';
+        }
+      });
+      init();
+    })();
+</script>
+</body>
+</html>
